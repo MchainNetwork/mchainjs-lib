@@ -1,0 +1,38 @@
+{
+  "name": "marbellachainjs-lib",
+  "version": "0.0.7",
+  "description": "An extend lib for bitcoinjs-lib, it supports two new network of marbellachain and marbellachain-testnet, and it can generate contract creating and sending transactions",
+  "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marbellachain/marbellachainjs-lib.git"
+  },
+  "scripts": {
+    "build-js": "browserify --require ./src/index.js:marbellachainjs-lib -o marbellachainjs-lib.js",
+    "build": "cross-env NODE_ENV=production browserify -g envify -e src/index.js | uglifyjs --reserved 'Array,BigInteger,Boolean,ECPair,Function,Number,Point,BigNumber' -c warnings=false -m > marbellachainjs.js"
+  },
+  "keywords": [
+    "marbellachain",
+    "marbellachainjs",
+    "smart contract",
+    "bitcoin"
+  ],
+  "author": "qtumweiyu",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/marbellachain/marbellachainjs-lib/issues"
+  },
+  "homepage": "https://github.com/marbellachain/marbellachainjs-lib#readme",
+  "devDependencies": {
+    "browserify": "^15.2.0",
+    "cross-env": "^2.0.1",
+    "envify": "^4.1.0",
+    "uglify-js": "^2.8.29"
+  },
+  "dependencies": {
+    "bignumber.js": "^4.1.0",
+    "bitcoinjs-lib": "^3.3.2",
+    "qtum-opcodes": "^1.0.0",
+    "safe-buffer": "^5.1.1"
+  }
+}
