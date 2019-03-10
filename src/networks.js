@@ -1,6 +1,6 @@
 module.exports = {
-    marbellachain: {
-        messagePrefix: '\x15MarbellaChain Signed Message:\n',
+    mchain: {
+        messagePrefix: '\x17Mchain Signed Message:\n',
         bech32: 'bc',
         bip32: {
             public: 0x0488b21e,
@@ -10,8 +10,8 @@ module.exports = {
         scriptHash: 0x3a, //58 Q
         wif: 0x80 //128
     },
-    marbellachain_testnet: {
-        messagePrefix: '\x15MarbellaChain Signed Message:\n',
+    mchain_testnet: {
+        messagePrefix: '\x17Mchain Signed Message:\n',
         bech32: 'tb',
         bip32: {
             public: 0x043587cf,

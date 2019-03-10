@@ -1,24 +1,24 @@
-# marbellachainjs-lib
+# mchainjs-lib
 This is an extend lib for bitcoinjs-lib.
 It extends the network type of bitcoinjs-lib.
 It also provides an useful lib to help you building MAR transactions.
 
 ## Installation
 ``` bash
-npm install https://github.com/marbellachain/marbellachainjs-lib.git
+npm install https://github.com/mchain/mchainjs-lib.git
 ```
 
 ## Setup
 ### Node.js
 ``` javascript
-var marbellachainjs = require('marbellachainjs-lib')
+var mchainjs = require('mchainjs-lib')
 ```
 
 ## New features
 ### Network
 ```
 {
-    marbellachain: {
+    mchain: {
         messagePrefix: '\x18MarbellaChain Signed Message:\n',
         bech32: 'bc',
         bip32: {
@@ -29,7 +29,7 @@ var marbellachainjs = require('marbellachainjs-lib')
         scriptHash: 0x32,
         wif: 0x80
     },
-    marbellachain_testnet: {
+    mchain_testnet: {
         messagePrefix: '\x18MarbellaChain Signed Message:\n',
         bech32: 'tb',
         bip32: {

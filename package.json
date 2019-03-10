@@ -1,28 +1,28 @@
 {
-  "name": "marbellachainjs-lib",
+  "name": "mchainjs-lib",
   "version": "0.0.7",
-  "description": "An extend lib for bitcoinjs-lib, it supports two new network of marbellachain and marbellachain-testnet, and it can generate contract creating and sending transactions",
+  "description": "An extend lib for bitcoinjs-lib, it supports two new network of mchain and mchain-testnet, and it can generate contract creating and sending transactions",
   "main": "src/index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/marbellachain/marbellachainjs-lib.git"
+    "url": "git+https://github.com/mchainnetwork/mchainjs-lib.git"
   },
   "scripts": {
-    "build-js": "browserify --require ./src/index.js:marbellachainjs-lib -o marbellachainjs-lib.js",
-    "build": "cross-env NODE_ENV=production browserify -g envify -e src/index.js | uglifyjs --reserved 'Array,BigInteger,Boolean,ECPair,Function,Number,Point,BigNumber' -c warnings=false -m > marbellachainjs.js"
+    "build-js": "browserify --require ./src/index.js:mchainjs-lib -o mchainjs-lib.js",
+    "build": "cross-env NODE_ENV=production browserify -g envify -e src/index.js | uglifyjs --reserved 'Array,BigInteger,Boolean,ECPair,Function,Number,Point,BigNumber' -c warnings=false -m > mchainjs.js"
   },
   "keywords": [
-    "marbellachain",
-    "marbellachainjs",
+    "mchain",
+    "mchainjs",
     "smart contract",
     "bitcoin"
   ],
   "author": "qtumweiyu",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/marbellachain/marbellachainjs-lib/issues"
+    "url": "https://github.com/mchainnetwork/mchainjs-lib/issues"
   },
-  "homepage": "https://github.com/marbellachain/marbellachainjs-lib#readme",
+  "homepage": "https://github.com/mchainnetwork/mchainjs-lib#readme",
   "devDependencies": {
     "browserify": "^15.2.0",
     "cross-env": "^2.0.1",
@@ -33,6 +33,7 @@
     "bignumber.js": "^4.1.0",
     "bitcoinjs-lib": "^3.3.2",
     "qtum-opcodes": "^1.0.0",
-    "safe-buffer": "^5.1.1"
+    "safe-buffer": "^5.1.1",
+    "coinselect": "^3.1.11"
   }
 }

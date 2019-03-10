@@ -2,6 +2,7 @@ var bitcoinjs = require('bitcoinjs-lib')
 var BigNumber = require('bignumber.js')
 var OPS = require('qtum-opcodes')
 var Buffer = require('safe-buffer').Buffer
+var coinSelect = require('coinselect')
 
 /**
  * This is a function for selecting MAR utxos to build transactions
@@ -12,35 +13,22 @@ var Buffer = require('safe-buffer').Buffer
  * @param Number fee(unit: MAR)
  * @returns [transaction]
  */
-function selectTxs(unspentTransactions, amount, fee) {
+function selectTxs(utxoList) {
     //sort the utxo
     var matureList = []
     var immatureList = []
-    for(var i = 0; i < unspentTransactions.length; i++) {
-        if(unspentTransactions[i].confirmations >= 1000 || unspentTransactions[i].isStake === false) {
-            matureList[matureList.length] = unspentTransactions[i]
-        }
-        else {
-            immatureList[immatureList.length] = unspentTransactions[i]
-        }
+    for(var i = 0; i < utxoList.length; i++) {
+      //utxoList[i].isStake === false
+      if(utxoList[i].confirmations >= 1000) {
+        matureList[matureList.length] = utxoList[i]
+      }
+      else {
+        immatureList[immatureList.length] = utxoList[i]
+      }
     }
     matureList.sort(function(a, b) {return a.value - b.value})
     immatureList.sort(function(a, b) {return b.confirmations - a.confirmations})
-    unspentTransactions = matureList.concat(immatureList)
-
-    var value = new BigNumber(amount).plus(fee).times(1e8)
-    var find = []
-    var findTotal = new BigNumber(0)
-    for (var i = 0; i < unspentTransactions.length; i++) {
-        var tx = unspentTransactions[i]
-        findTotal = findTotal.plus(tx.value)
-        find[find.length] = tx
-        if (findTotal.greaterThanOrEqualTo(value)) break
-    }
-    if (value.greaterThan(findTotal)) {
-        throw new Error('You do not have enough MAR to send')
-    }
-    return find
+    return matureList.concat(immatureList)
 }
 
 /**
@@ -56,21 +44,33 @@ function selectTxs(unspentTransactions, amount, fee) {
  */
 function buildPubKeyHashTransaction(keyPair, to, amount, fee, utxoList) {
     var from = keyPair.getAddress()
-    var inputs = selectTxs(utxoList, amount, fee)
+
+    utxoList = selectTxs(utxoList)
+
+    var target = [{address: to, value: amount * 1e8}]
+    var selected = coinSelect(utxoList, target, fee)
+
+    console.log('fee', selected.fee)
+
+    if (!selected.inputs || !selected.outputs) {
+      throw new Error('You do not have enough MAR to send')
+    }
+
     var tx = new bitcoinjs.TransactionBuilder(keyPair.network)
-    var totalValue = new BigNumber(0)
-    var value = new BigNumber(amount).times(1e8)
-    var sendFee = new BigNumber(fee).times(1e8)
-    for (var i = 0; i < inputs.length; i++) {
-        tx.addInput(inputs[i].hash, inputs[i].pos)
-        totalValue = totalValue.plus(inputs[i].value)
+
+    for (var i = 0; i < selected.inputs.length; i++) {
+      tx.addInput(selected.inputs[i].txid, selected.inputs[i].vout)
     }
-    tx.addOutput(to, new BigNumber(value).toNumber())
-    if (totalValue.minus(value).minus(sendFee).toNumber() > 0) {
-        tx.addOutput(from, totalValue.minus(value).minus(sendFee).toNumber())
+
+    for (var i = 0; i < selected.outputs.length; i++) {
+      if (!selected.outputs[i].address) {
+        selected.outputs[i].address = from
+      }
+      tx.addOutput(selected.outputs[i].address, selected.outputs[i].value)
     }
-    for (var i = 0; i < inputs.length; i++) {
-        tx.sign(i, keyPair)
+
+    for (var i = 0; i < selected.inputs.length; i++) {
+      tx.sign(i, keyPair)
     }
     return tx.build().toHex()
 }
@@ -88,32 +88,46 @@ function buildPubKeyHashTransaction(keyPair, to, amount, fee, utxoList) {
  * @returns String the built tx
  */
 function buildCreateContractTransaction(keyPair, code, gasLimit, gasPrice, fee, utxoList) {
-    var from = keyPair.getAddress()
-    var amount = 0
-    fee = new BigNumber(gasLimit).times(gasPrice).div(1e8).add(fee).toNumber()
-    var inputs = selectTxs(utxoList, amount, fee)
-    var tx = new bitcoinjs.TransactionBuilder(keyPair.network)
-    var totalValue = new BigNumber(0)
-    var sendFee = new BigNumber(fee).times(1e8)
-    for (var i = 0; i < inputs.length; i++) {
-        tx.addInput(inputs[i].hash, inputs[i].pos)
-        totalValue = totalValue.plus(inputs[i].value)
+  var from = keyPair.getAddress()
+
+  utxoList = selectTxs(utxoList)
+
+  var gas = new BigNumber(gasLimit).times(gasPrice).toNumber()
+
+  var target = [{address: contractAddress, value: gas}]
+  var selected = coinSelect(utxoList, target, fee)
+
+  console.log('fee', selected.fee)
+
+  if (!selected.inputs || !selected.outputs) {
+    throw new Error('You do not have enough MAR to send')
+  }
+
+  var tx = new bitcoinjs.TransactionBuilder(keyPair.network)
+
+  for (var i = 0; i < selected.inputs.length; i++) {
+    tx.addInput(selected.inputs[i].txid, selected.inputs[i].vout)
+  }
+
+  var contract =  bitcoinjs.script.compile([
+      OPS.OP_4,
+      number2Buffer(gasLimit),
+      number2Buffer(gasPrice),
+      hex2Buffer(code),
+      OPS.OP_CREATE
+  ])
+  tx.addOutput(contract, 0)
+
+  for (var i = 0; i < selected.outputs.length; i++) {
+    if (!selected.outputs[i].address) {
+      tx.addOutput(from, selected.outputs[i].value)
     }
-    var contract =  bitcoinjs.script.compile([
-        OPS.OP_4,
-        number2Buffer(gasLimit),
-        number2Buffer(gasPrice),
-        hex2Buffer(code),
-        OPS.OP_CREATE
-    ])
-    tx.addOutput(contract, 0)
-    if (totalValue.minus(sendFee).toNumber() > 0) {
-        tx.addOutput(from, totalValue.minus(sendFee).toNumber())
-    }
-    for (var i = 0; i < inputs.length; i++) {
-        tx.sign(i, keyPair)
-    }
-    return tx.build().toHex()
+  }
+
+  for (var i = 0; i < selected.inputs.length; i++) {
+    tx.sign(i, keyPair)
+  }
+  return tx.build().toHex()
 }
 
 /**
@@ -130,33 +144,47 @@ function buildCreateContractTransaction(keyPair, code, gasLimit, gasPrice, fee, 
  * @returns String the built tx
  */
 function buildSendToContractTransaction(keyPair, contractAddress, encodedData, gasLimit, gasPrice, fee, utxoList) {
-    var from = keyPair.getAddress()
-    var amount = 0
-    fee = new BigNumber(gasLimit).times(gasPrice).div(1e8).add(fee).toNumber()
-    var inputs = selectTxs(utxoList, amount, fee)
-    var tx = new bitcoinjs.TransactionBuilder(keyPair.network)
-    var totalValue = new BigNumber(0)
-    var sendFee = new BigNumber(fee).times(1e8)
-    for (var i = 0; i < inputs.length; i++) {
-        tx.addInput(inputs[i].hash, inputs[i].pos)
-        totalValue = totalValue.plus(inputs[i].value)
+  var from = keyPair.getAddress()
+
+  utxoList = selectTxs(utxoList)
+
+  var gas = new BigNumber(gasLimit).times(gasPrice).toNumber()
+
+  var target = [{address: contractAddress, value: gas}]
+  var selected = coinSelect(utxoList, target, fee)
+
+  console.log('fee', selected.fee)
+
+  if (!selected.inputs || !selected.outputs) {
+    throw new Error('You do not have enough MAR to send')
+  }
+
+  var tx = new bitcoinjs.TransactionBuilder(keyPair.network)
+
+  for (var i = 0; i < selected.inputs.length; i++) {
+    tx.addInput(selected.inputs[i].txid, selected.inputs[i].vout)
+  }
+
+  var contract =  bitcoinjs.script.compile([
+      OPS.OP_4,
+      number2Buffer(gasLimit),
+      number2Buffer(gasPrice),
+      hex2Buffer(encodedData),
+      hex2Buffer(contractAddress),
+      OPS.OP_CALL
+  ])
+  tx.addOutput(contract, 0)
+
+  for (var i = 0; i < selected.outputs.length; i++) {
+    if (!selected.outputs[i].address) {
+      tx.addOutput(from, selected.outputs[i].value)
     }
-    var contract =  bitcoinjs.script.compile([
-        OPS.OP_4,
-        number2Buffer(gasLimit),
-        number2Buffer(gasPrice),
-        hex2Buffer(encodedData),
-        hex2Buffer(contractAddress),
-        OPS.OP_CALL
-    ])
-    tx.addOutput(contract, 0)
-    if (totalValue.minus(sendFee).toNumber() > 0) {
-        tx.addOutput(from, totalValue.minus(sendFee).toNumber())
-    }
-    for (var i = 0; i < inputs.length; i++) {
-        tx.sign(i, keyPair)
-    }
-    return tx.build().toHex()
+  }
+
+  for (var i = 0; i < selected.inputs.length; i++) {
+    tx.sign(i, keyPair)
+  }
+  return tx.build().toHex()
 }
 
 function number2Buffer(num) {

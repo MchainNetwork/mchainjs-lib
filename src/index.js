@@ -1,7 +1,7 @@
-var marbellachainjs = require('bitcoinjs-lib')
+var mchainjs = require('bitcoinjs-lib')
 
-Object.assign(marbellachainjs.networks, require('./networks'))
+Object.assign(mchainjs.networks, require('./networks'))
 
-marbellachainjs.utils = require('./utils')
+mchainjs.utils = require('./utils')
 
-module.exports = marbellachainjs
+module.exports = mchainjs
