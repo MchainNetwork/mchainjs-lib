@@ -1,51 +1,60 @@
 # mchainjs-lib
+
 This is an extend lib for bitcoinjs-lib.
 It extends the network type of bitcoinjs-lib.
 It also provides an useful lib to help you building MAR transactions.
 
 ## Installation
-``` bash
-npm install https://github.com/mchain/mchainjs-lib.git
+
+```bash
+npm install https://github.com/mchainnetwork/mchainjs-lib.git
 ```
 
 ## Setup
+
 ### Node.js
-``` javascript
-var mchainjs = require('mchainjs-lib')
+
+```javascript
+var mchainjs = require('mchainjs-lib');
 ```
 
 ## New features
+
 ### Network
+
 ```
 {
-    mchain: {
-        messagePrefix: '\x18MarbellaChain Signed Message:\n',
-        bech32: 'bc',
-        bip32: {
-            public: 0x0488b21e,
-            private: 0x0488ade4
-        },
-        pubKeyHash: 0x3a,
-        scriptHash: 0x32,
-        wif: 0x80
+  mchain: {
+    messagePrefix: '\x17Mchain Signed Message:\n',
+    bech32: 'bc',
+    bip32: {
+      public: 0x0488b21e,
+      private: 0x0488ade4
     },
-    mchain_testnet: {
-        messagePrefix: '\x18MarbellaChain Signed Message:\n',
-        bech32: 'tb',
-        bip32: {
-            public: 0x043587cf,
-            private: 0x04358394
-        },
-        pubKeyHash: 0x78,
-        scriptHash: 0x6e,
-        wif: 0xef
-    }
+    pubKeyHash: 0x32, //50 M
+    scriptHash: 0x3a, //58 Q
+    wif: 0x80 //128
+  },
+  mchain_testnet: {
+    messagePrefix: '\x17Mchain Signed Message:\n',
+    bech32: 'tb',
+    bip32: {
+      public: 0x043587cf,
+      private: 0x04358394
+    },
+    pubKeyHash: 0x6e, //110 m
+    scriptHash: 0x78, //120 q
+    wif: 0xef
+  }
 }
+
 
 ```
 
 ### Utils
+
 #### Utils.selectTxs
+
 ```javascript
 /**
  * This is a function for selecting MAR utxos to build transactions
@@ -58,7 +67,9 @@ var mchainjs = require('mchainjs-lib')
  */
 function selectTxs(unspentTransactions, amount, fee)
 ```
+
 #### Utils.buildPubKeyHashTransaction
+
 ```javascript
 /**
  * This is a helper function to build a pubkeyhash transaction
@@ -73,7 +84,9 @@ function selectTxs(unspentTransactions, amount, fee)
  */
 function buildPubKeyHashTransaction(keyPair, to, amount, fee, utxoList)
 ```
+
 #### Utils.buildCreateContractTransaction
+
 ```javascript
 /**
  * This is a helper function to build a create-contract transaction
@@ -89,7 +102,9 @@ function buildPubKeyHashTransaction(keyPair, to, amount, fee, utxoList)
  */
 function buildCreateContractTransaction(keyPair, code, gasLimit, gasPrice, fee, utxoList)
 ```
+
 #### Utils.buildSendToContractTransaction
+
 ```javascript
 /**
  * This is a helper function to build a send-to-contract transaction
